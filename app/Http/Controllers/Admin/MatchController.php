@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\Auth;
 use Stevebauman\Purify\Facades\Purify;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use App\Models\ContentOdd;
+
 
 class MatchController extends Controller
 {
@@ -27,6 +30,7 @@ class MatchController extends Controller
         $data['matches'] = GameMatch::with(['gameCategory', 'gameTournament', 'gameTeam1', 'gameTeam2'])->withCount('activeQuestions')->orderBy('id', 'desc')->paginate(config('basic.paginate'));
         $data['tournaments'] = GameTournament::with('gameCategory')->whereStatus(1)->orderBy('name', 'asc')->get();
         $data['categories'] = GameCategory::whereStatus(1)->orderBy('name', 'asc')->get();
+        $data['matches_from_odd'] = json_decode($this::matchesFromOdds());
         return view('admin.match.list', $data);
     }
 
@@ -72,6 +76,53 @@ class MatchController extends Controller
         return view('admin.match.list', $data);
     }
 
+    public function matchesFromOdds()
+    {
+        $content = ContentOdd::where('name', 'Odds')->orderBy('id', 'desc')->limit(1)->get()->toArray();
+        if (count($content) < 1)
+        {
+            return "[]";
+        }
+
+        $matches = json_decode($content[0]['content']);
+        $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
+
+        $to_add_matches = [];
+        foreach ($matches as &$match) {
+            $tour_id = array_search($match->sport_title, array_column($tours, 'name'));
+            if ($tour_id === false) continue;
+
+            $tour = $tours[$tour_id];
+            $category = $tour['game_category'];
+
+            $teams = GameTeam::where('category_id', $tour['category_id'])->orderBy('id', 'desc')->get()->toArray();
+
+            $home_id = array_search($match->home_team, array_column($teams, 'name'));
+            if ($home_id === false) continue;
+            $home_team = $teams[$home_id];
+
+            $away_id = array_search($match->away_team, array_column($teams, 'name'));
+            if ($away_id === false) continue;
+            $away_team = $teams[$away_id];
+
+            array_push($to_add_matches, [
+                'key' => $match->id,
+                'commence_time' => $match->commence_time,
+                'start_at' => date('m/d/Y h:m', strtotime($match->commence_time)),
+                'category_id' => $category['id'],
+                'category' => $category['name'],
+                'tour_id' => $tour['id'],
+                'tour' => $tour['name'],
+                'team01' => $home_team['name'],
+                'team01_id' => $home_team['id'],
+                'team02' => $away_team['name'],
+                'team02_id' => $away_team['id'],
+                'active' => true,
+            ]);
+        }
+
+        return json_encode($to_add_matches);
+    }
 
     public function ajaxListMatch(Request $request)
     {
@@ -150,6 +201,166 @@ class MatchController extends Controller
 
         } catch (\Exception $e) {
             return back();
+        }
+    }
+
+    public function storeMatchesFromOdd(Request $request)
+    {
+
+        $content = ContentOdd::where('name', 'Odds')->orderBy('id', 'desc')->limit(1)->get()->toArray();
+        $matches = [];
+        if (count($content) > 0)
+        {
+            $matches = json_decode($content[0]['content']);
+        }
+
+        $names = $request->get('checks_add');
+        $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+
+        $teams = [];
+        try {
+            for($i = 0; $i < count($names); $i++)
+            {
+                list($id, $team1, $team2, $category, $tour, $commence_time) = explode(":", $names[$i]);
+
+                $match = new GameMatch();
+                $match->category_id = $category;
+                $match->tournament_id = $tour;
+                $match->team1_id = $team1;
+                $match->team2_id = $team2;
+                $match->start_date = $commence_time;
+                $match->end_date = date('Y-m-d\Th:i:sZ', strtotime($commence_time. ' + 1 days'));
+                $match->status = 1;
+
+                $match->save();
+
+                $detail_id = array_search($id, array_column($matches, 'id'));
+                $details = $matches[$detail_id];
+                $this->storeQuestionsFromOdd($match->id, $details);
+            }
+
+            return back()->with('success', 'Successfully Saved');
+
+        } catch (\Exception $e) {
+            return back();
+        }
+    }
+
+    public function storeQuestionsFromOdd($match_id, $details)
+    {
+        $home_team = $details->home_team;
+        $away_team = $details->away_team;
+
+        $h2h = [[
+            "name" => $home_team,
+            "price" => 0,
+        ], [
+            "name" => $away_team,
+            "price" => 0,
+        ], [
+            "name" => "Draw",
+            "price" => 0,
+        ]];
+
+        $spreads = [[
+            "name" => $home_team,
+            "price" => 0,
+            "point" => 0,
+        ], [
+            "name" => $away_team,
+            "price" => 0,
+            "point" => 0,
+        ]];
+        
+        $totals = [[
+            "name" => 'Over',
+            "price" => 0,
+            "point" => 0,
+        ], [
+            "name" => 'Under',
+            "price" => 0,
+            "point" => 0,
+        ]];
+
+        $h2h_count = 0;
+        $spreads_count = 0;
+        $totals_count = 0;
+        
+        $bookmakers = $details->bookmakers;
+        foreach ($bookmakers as $bookmaker)
+        {
+            $markets = $bookmaker->markets;
+            
+            foreach ($markets as $market)
+            {
+                if ($market->key == 'h2h') {
+                    $h2h_count++;
+                    $h2h = $this->average($h2h, $market->outcomes, $h2h_count);
+                }
+
+                if ($market->key == 'spreads') {
+                    $spreads_count++;
+                    $spreads = $this->average($spreads, $market->outcomes, $spreads_count);
+                }
+
+                if ($market->key == 'totals') {
+                    $totals_count++;
+                    $totals = $this->average($totals, $market->outcomes, $totals_count);
+                }
+            }
+        }
+
+        $this->storeQuestionFrom($match_id, $h2h, 'MoneyLine');
+        $this->storeQuestionFrom($match_id, $spreads, 'Handicaps');
+        $this->storeQuestionFrom($match_id, $totals, 'Over / Under');
+    }
+
+    public function average($arr1, $arr2, $count)
+    {
+        $result = [];
+        foreach ($arr1 as $item1)
+        {
+            $item = [];
+            foreach ($arr2 as $item2)
+            {
+                if ($item1['name'] != $item2->name) continue;
+
+                $item['name'] = $item1['name'];
+
+                if (isset($item2->point))
+                    $item['point'] = number_format($item2->point ? ($item1['point'] * ($count - 1) + $item2->point) / $count : 0, 2);
+
+                if (isset($item2->price))
+                    $item['price'] = number_format($item2->price ? ($item1['price'] * ($count - 1) + $item2->price) / $count : 0, 2);
+
+                break;
+            }
+
+            array_push($result, $item);
+        }
+
+        return $result;
+    }
+
+    public function storeQuestionFrom($match_id, $data, $title)
+    {
+        $betQues = new GameQuestions();
+        $betQues->match_id = $match_id;
+        $betQues->creator_id = Auth::guard('admin')->id();
+        $betQues->name = $title;
+        $betQues->status = 1;
+        $betQues->end_time = Carbon::parse('2024-06-25');
+        $betQues->save();
+
+        foreach ($data as $item) {
+            $betOpt = new GameOption();
+            $betOpt->creator_id = Auth::guard('admin')->id();
+            $betOpt->question_id = $betQues->id;
+            $betOpt->match_id = $betQues->match_id;
+            $betOpt->option_name = $item['name'];
+            $betOpt->ratio = $item['price'];
+            $betOpt->status = 1;
+            $betOpt->save();
         }
     }
 
