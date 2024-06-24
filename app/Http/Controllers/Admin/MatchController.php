@@ -321,8 +321,10 @@ class MatchController extends Controller
         foreach ($arr1 as $item1)
         {
             $item = [];
+            if (count($item1) < 1) continue;
             foreach ($arr2 as $item2)
             {
+                if (count($item2) < 1) continue;
                 if ($item1['name'] != $item2->name) continue;
 
                 $item['name'] = $item1['name'];
