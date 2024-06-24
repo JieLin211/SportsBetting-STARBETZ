@@ -8,6 +8,9 @@ use App\Models\GameTournament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Stevebauman\Purify\Facades\Purify;
+use Illuminate\Support\Facades\Http;
+use App\Models\ContentOdd;
+
 
 class TournamentController extends Controller
 {
@@ -15,7 +18,41 @@ class TournamentController extends Controller
     {
         $data['tournaments'] = GameTournament::with('gameCategory')->orderBy('id','desc')->get();
         $data['categories'] = GameCategory::whereStatus(1)->orderBy('name','asc')->get();
+        $data['tournments_from_odds'] = json_decode($this::tournamentFromOdds());
         return view('admin.tournament.list', $data);
+    }
+
+    public function tournamentFromOdds()
+    {
+        $content = ContentOdd::where('name', 'Sport')->orderBy('id', 'desc')->limit(1)->get()->toArray();
+        if (count($content) < 1)
+        {
+            return "[]";
+        }
+
+        $sports = json_decode($content[0]['content']);
+
+        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+        $categories = GameCategory::whereStatus(1)->orderBy('name','asc')->get()->pluck('name')->toArray();
+
+        $tournaments = [];
+        foreach ($sports as &$sport) {
+            $exist = array_search($sport->title, $added_tournaments);
+            if ($exist !== false) continue;
+
+            $category = array_search($sport->group, $categories);
+            if ($category === false) continue;
+
+            $tournaments[$sport->title] = [
+                'key' => $sport->title,
+                'title' => $sport->title,
+                'group' => $sport->group,
+                'active' => $sport->active,
+                'has_outrights' => $sport->has_outrights,
+            ];
+        }
+
+        return json_encode(array_values($tournaments));
     }
 
     public function storeTournament(Request $request)
@@ -54,6 +91,47 @@ class TournamentController extends Controller
             return back()->with('success', 'Successfully Saved');
 
         }catch (\Exception $e){
+            return back();
+        }
+    }
+
+    public function storeTournamentsFromOdd(Request $request)
+    {
+
+        $names = $request->get('checks_add');
+        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+        $categories = GameCategory::whereStatus(1)->orderBy('name','asc')->get()->toArray();
+
+        $tournaments = [];
+        for($i = 0; $i < count($names); $i++)
+        {
+            list($name, $group, $status) = explode(":", $names[$i]);
+            $exist = array_search($name, $added_tournaments);
+            $id = array_search($group, array_column($categories, 'name'));
+
+            $tournament = [
+                'name' => $name,
+                'category_id' => $categories[$id]['id'],
+                'status' => $status,
+            ];
+            array_push($tournaments, $tournament);
+        }
+
+        try {
+
+            foreach($tournaments as $tournament)
+            {
+                $gameTournament = new GameTournament();
+                $gameTournament->name = $tournament['name'];
+                $gameTournament->category_id = $tournament['category_id'];
+                $gameTournament->status = $tournament['status'];
+
+                $gameTournament->save();
+            }
+
+            return back()->with('success', 'Successfully Saved');
+
+        } catch (\Exception $e) {
             return back();
         }
     }

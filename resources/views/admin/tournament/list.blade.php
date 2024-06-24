@@ -8,12 +8,17 @@
         <div class="card-header bg-transparent">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
                 @if(adminAccessRoute(config('role.manage_game.access.add')))
-                <a href="javascript:void(0)" class="btn btn-sm btn-primary mr-2" data-target="#newModal"
-                   data-toggle="modal">
-                    <span><i class="fa fa-plus-circle"></i> @lang('Add New')</span>
-                </a>
+                    <div>
+                        <a href="javascript:void(0)" class="btn btn-sm btn-primary mr-2" data-target="#newModal"
+                        data-toggle="modal">
+                            <span><i class="fa fa-plus-circle"></i> @lang('Add New')</span>
+                        </a>
+                        <a href="javascript:void(0)" class="btn btn-sm btn-primary mr-2" data-target="#newOddModal"
+                        data-toggle="modal">
+                            <span><i class="fa fa-plus-circle"></i> @lang('Add New From Odd')</span>
+                        </a>
+                    </div>
                 @endif
-
 
                 @if(adminAccessRoute(config('role.manage_game.access.edit')))
                 <div class="dropdown mb-2 text-right">
@@ -29,8 +34,10 @@
                     </div>
                 </div>
                 @endif
+
             </div>
         </div>
+
         <div class="card-body">
             <div class="table-responsive">
                 <table class="categories-show-table table table-hover table-striped table-bordered" id="zero_config">
@@ -38,7 +45,7 @@
                     <tr>
                         <th scope="col" class="text-center">
                             <input type="checkbox" class="form-check-input check-all tic-check" name="check-all"
-                                   id="check-all">
+                                id="check-all">
                             <label for="check-all"></label>
                         </th>
 
@@ -56,7 +63,7 @@
                     @forelse($tournaments as  $item)
                         <tr>
                             <td class="text-center">
-                                <input type="checkbox" id="chk-{{ $item->id }}"
+                                <input type="checkbox" id="chk-{{ $item->id }}" data-level="1" 
                                        class="form-check-input row-tic tic-check" name="check" value="{{$item->id}}"
                                        data-id="{{ $item->id }}">
                                 <label for="chk-{{ $item->id }}"></label>
@@ -214,6 +221,79 @@
         </div>
     </div>
 
+    {{-- New MODAL From Odd --}}
+    <div id="newOddModal" class="modal fade show" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header modal-colored-header bg-primary">
+                    <h5 class="modal-title">@lang('Add New From Odd')</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="{{route('admin.storeTournamentsFromOdd')}}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="categories-show-table table table-hover table-striped table-bordered" id="zero_config">
+                                <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col" class="text-center">
+                                        <input type="checkbox" class="form-check-input check-all tic-check" name="check-odd-all"
+                                            id="check-odd-all">
+                                        <label for="check-odd-all"></label>
+                                    </th>
+
+                                    <th scope="col">@lang('Name')</th>
+                                    <th scope="col" class="text-center">@lang('Game Category')</th>
+                                    <th scope="col" class="text-center">@lang('Status')</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @forelse($tournments_from_odds as $item)
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox" id="chk-{{ $item->key }}" data-level="2"
+                                                class="form-check-input row-tic tic-check" name="checks_add[]" value="{{$item->key}}:{{$item->group}}:{{$item->active}}"
+                                                data-id="{{ $item->key }}">
+                                            <label for="chk-{{ $item->key }}"></label>
+                                        </td>
+
+                                        <td data-label="@lang('Name')">
+                                            {{ $item->title }}
+                                        </td>
+                                        
+                                        <td data-label="@lang('Game Category')">
+                                            {{ $item->group }}
+                                        </td>
+
+                                        <td data-label="@lang('Status')" class="text-lg-center text-right">
+                                            @if ($item->active != true)
+                                                <span class="badge badge-light">
+                                        <i class="fa fa-circle text-danger danger font-12"></i> @lang('Deactive')</span>
+                                            @else
+                                                <span class="badge badge-light">
+                                        <i class="fa fa-circle text-success success font-12"></i> @lang('Active')</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+
+                                @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">@lang('Save')</button>
+                        <button type="button" class="btn btn-dark" data-dismiss="modal">@lang('Close')</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {{-- Edit MODAL --}}
     <div id="editModal" class="modal fade show" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
@@ -326,16 +406,30 @@
         })
 
         $(document).on('click', '#check-all', function () {
-            $('input:checkbox').not(this).prop('checked', this.checked);
+            $('input:checkbox[data-level="1"]').prop('checked', this.checked);
         });
 
-        $(document).on('change', ".row-tic", function () {
-            let length = $(this).length;
-            let checkedLength = $(".row-tic:checked").length;
+        $(document).on('change', "input:checkbox[data-level=1]", function () {
+            let length = $("input:checkbox[data-level=1]").length;
+            let checkedLength = $("input:checkbox[data-level=1]:checked").length;
             if (length == checkedLength) {
                 $('#check-all').prop('checked', true);
             } else {
                 $('#check-all').prop('checked', false);
+            }
+        });
+
+        $(document).on('click', '#check-odd-all', function () {
+            $('input:checkbox[data-level=2]').not(this).prop('checked', this.checked);
+        });
+
+        $(document).on('change', "input:checkbox[data-level='2']", function () {
+            let length = $("input:checkbox[data-level=2]").length;
+            let checkedLength = $("input:checkbox[data-level='2']:checked").length;
+            if (length == checkedLength) {
+                $('#check-odd-all').prop('checked', true);
+            } else {
+                $('#check-odd-all').prop('checked', false);
             }
         });
 
