@@ -7,6 +7,9 @@ use App\Models\GameCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Stevebauman\Purify\Facades\Purify;
+use Illuminate\Support\Facades\Http;
+use App\Models\ContentOdd;
+
 
 class CategoryController extends Controller
 {
@@ -17,7 +20,35 @@ class CategoryController extends Controller
         ksort($games);
         $data['games'] = $games;
         $data['categories'] = GameCategory::withCount('activeTournament', 'activeTeam','activeMatch')->orderBy('id', 'desc')->get();
+        $data['categories_from_odds'] = json_decode($this::categoriesFromOdds());
         return view('admin.category.list', $data);
+    }
+
+    public function categoriesFromOdds()
+    {
+        $content = ContentOdd::where('name', 'Sport')->orderBy('id', 'desc')->limit(1)->get()->toArray();
+        if (count($content) < 1)
+        {
+            return "[]";
+        }
+
+        $sports = json_decode($content[0]['content']);
+        $added_categories = GameCategory::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+
+        $categories = [];
+        foreach ($sports as &$sport) {
+            $exist = array_search($sport->group, $added_categories);
+            if ($exist !== false) continue;
+
+            $categories[$sport->group] = [
+                'key' => $sport->group,
+                'title' => $sport->title,
+                'name' => $sport->group,
+                'active' => $sport->active,
+            ];
+        }
+
+        return json_encode(array_values($categories));
     }
 
     public function storeCategory(Request $request)
@@ -53,6 +84,47 @@ class CategoryController extends Controller
             $gameCategory->status = isset($purifiedData['status']) == 'true' ? 1 : 0;
 
             $gameCategory->save();
+            return back()->with('success', 'Successfully Saved');
+
+        } catch (\Exception $e) {
+            return back();
+        }
+    }
+
+    public function storeCategoriesFromOdd(Request $request)
+    {
+
+        $names = $request->get('checks_add');
+        $icons = $request->get('icons_add');
+
+        if (!$icons || count($icons) < count($names)) {
+            return back()->withInput()->withErrors(['icon.required' => 'Icon field is required']);
+        }
+
+        $categories = [];
+        for($i = 0; $i < count($names); $i++)
+        {
+            list($name, $status) = explode(":", $names[$i]);
+            $category = [
+                'name' => $name,
+                'icon' => $icons[$i],
+                'status' => $status,
+            ];
+            array_push($categories, $category);
+        }
+
+        try {
+
+            foreach($categories as $category)
+            {
+                $gameCategory = new GameCategory();
+                $gameCategory->name = $category['name'];
+                $gameCategory->icon = $category['icon'];
+                $gameCategory->status = $category['status'];
+
+                $gameCategory->save();
+            }
+
             return back()->with('success', 'Successfully Saved');
 
         } catch (\Exception $e) {
