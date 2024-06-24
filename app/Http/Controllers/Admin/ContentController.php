@@ -7,11 +7,13 @@ use App\Http\Traits\Upload;
 use App\Models\Content;
 use App\Models\ContentDetails;
 use App\Models\ContentMedia;
+use App\Models\ContentOdd;
 use App\Models\Language;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Validator;
 use Stevebauman\Purify\Facades\Purify;
+use Illuminate\Support\Facades\Http;
 
 
 class ContentController extends Controller
@@ -200,6 +202,34 @@ class ContentController extends Controller
         $content = Content::findOrFail($id);
         $content->delete();
         return back()->with('success', 'Content has been deleted');
+    }
+
+    public function syncOdds()
+    {
+        $api_key = env("ODD_API_KEY", '');
+        $api_url = env("ODD_API_URL", '');
+
+        $response = Http::get($api_url.'/v4/sports/?apiKey='.$api_key);
+        if ( $response->successful() ) {
+            $contentOdds = new ContentOdd();
+            $contentOdds->name = 'Sport';
+            $contentOdds->content = $response->body();
+            $contentOdds->save();
+        } else {
+            return back()->with('error', 'Sports Sync with Odds failed. Try again later.');
+        }
+
+        $response = Http::get($api_url.'/v4/sports/upcoming/odds/?regions=us,us2,uk,eu,au&markets=h2h,totals,spreads&apiKey='.$api_key);
+        if ( $response->successful() ) {
+            $contentOdds = new ContentOdd();
+            $contentOdds->name = 'Odds';
+            $contentOdds->content = $response->body();
+            $contentOdds->save();
+        } else {
+            return back()->with('error', 'Odd Data Sync from Odds failed. Try again later.');
+        }
+
+        return back()->with('success', 'Sync Data from Odds Successfully Saved!');
     }
 
 }

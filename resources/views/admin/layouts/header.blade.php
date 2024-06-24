@@ -72,6 +72,12 @@
                         </ul>
                     </div>
                 </li>
+
+                <li class="nav-item flex-center" style="margin-left: 30px" id="sync_odd">
+                    <a href="{{ route('admin.content.sync_odds') }}" class="btn btn-sm btn-primary mr-2">
+                        <span><i class="fa fa-plus-circle"></i> @lang('Sync With Odds')</span>
+                    </a>
+                </li>
             </ul>
 
             <ul class="navbar-nav float-right">
