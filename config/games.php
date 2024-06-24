@@ -4,6 +4,7 @@ return [
     "Globe" => '<i class="far fa-globe-americas" aria-hidden="true"></i>',
     "Cricket" => '<i class="far fa-cricket" aria-hidden="true"></i>',
     "Football" => '<i class="far fa-futbol" aria-hidden="true"></i>',
+    "Rugby" => '<i class="fas fa-football-ball" aria-hidden="true"></i>',
     "Table tennis" => '<i class="far fa-table-tennis" aria-hidden="true"></i>',
     "Baseball" => '<i class="far fa-baseball" aria-hidden="true"></i>',
     "Basketball" => '<i class="far fa-basketball-ball" aria-hidden="true"></i>',
