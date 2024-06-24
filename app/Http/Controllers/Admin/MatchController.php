@@ -218,7 +218,7 @@ class MatchController extends Controller
         $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
 
         $teams = [];
-        // try {
+        try {
             for($i = 0; $i < count($names); $i++)
             {
                 list($id, $team1, $team2, $category, $tour, $commence_time) = explode(":", $names[$i]);
@@ -241,9 +241,9 @@ class MatchController extends Controller
 
             return back()->with('success', 'Successfully Saved');
 
-        // } catch (\Exception $e) {
-        //     return back();
-        // }
+        } catch (\Exception $e) {
+            return back();
+        }
     }
 
     public function storeQuestionsFromOdd($match_id, $details)
