@@ -4869,3 +4869,8 @@ div[class*=col]:nth-of-type(4n + 4) .dashboard__card .view-btn {
 .bet-box-wrapper::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
 }
+.flex-center {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
