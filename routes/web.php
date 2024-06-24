@@ -169,6 +169,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::post('category-active', 'Admin\CategoryController@activeMultiple')->name('category-active');
         Route::post('category-deactive', 'Admin\CategoryController@deActiveMultiple')->name('category-deactive');
 
+        Route::post('category/store_from_odd', 'Admin\CategoryController@storeCategoriesFromOdd')->name('storeCategoriesFromOdd');
+
+
         //Manage Tournament
         Route::get('tournament/list', 'Admin\TournamentController@listTournament')->name('listTournament');
         Route::post('tournament/store', 'Admin\TournamentController@storeTournament')->name('storeTournament');
@@ -178,6 +181,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::post('tournament-active', 'Admin\TournamentController@activeMultiple')->name('tournament-active');
         Route::post('tournament-deactive', 'Admin\TournamentController@deActiveMultiple')->name('tournament-deactive');
 
+        Route::post('tournament/store_from_odd', 'Admin\TournamentController@storeTournamentsFromOdd')->name('storeTournamentsFromOdd');
+
+
         //Manage Team
         Route::get('team/list', 'Admin\TeamController@listTeam')->name('listTeam');
         Route::post('team/store', 'Admin\TeamController@storeTeam')->name('storeTeam');
@@ -186,6 +192,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
 
         Route::post('team-active', 'Admin\TeamController@activeMultiple')->name('team-active');
         Route::post('team-deactive', 'Admin\TeamController@deActiveMultiple')->name('team-deactive');
+
+        Route::post('team/store_from_odd', 'Admin\TeamController@storeTeamsFromOdd')->name('storeTeamsFromOdd');
 
 
         //Manage Match
@@ -217,7 +225,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::post('optionDelete', 'Admin\MatchOptionController@optionDelete')->name('optionDelete');
         Route::post('question/locker', 'Admin\MatchOptionController@questionLocker')->name('question.locker');
 
+        Route::post('match/store_from_odd', 'Admin\MatchController@storeMatchesFromOdd')->name('storeMatchesFromOdd');
 
+        
         //Manage Bet
         Route::get('/bet-history/{user_id?}', 'Admin\ManageBetController@betList')->name('historyBet');
         Route::get('/bet/history/search', 'Admin\ManageBetController@betSearch')->name('searchBet');
@@ -397,6 +407,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::get('content-show/{content}/{name?}', 'Admin\ContentController@show')->name('content.show');
         Route::put('content-update/{content}/{language?}', 'Admin\ContentController@update')->name('content.update');
         Route::delete('contents/{id}', 'Admin\ContentController@contentDelete')->name('content.delete');
+
+        Route::get('contents/odds/sync', 'Admin\ContentController@syncOdds')->name('content.sync_odds');
 
         Route::get('push-notification-show', 'SiteNotificationController@showByAdmin')->name('push.notification.show');
         Route::get('push.notification.readAll', 'SiteNotificationController@readAllByAdmin')->name('push.notification.readAll');
