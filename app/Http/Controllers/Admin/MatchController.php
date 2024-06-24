@@ -218,7 +218,7 @@ class MatchController extends Controller
         $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
 
         $teams = [];
-        try {
+        // try {
             for($i = 0; $i < count($names); $i++)
             {
                 list($id, $team1, $team2, $category, $tour, $commence_time) = explode(":", $names[$i]);
@@ -241,9 +241,9 @@ class MatchController extends Controller
 
             return back()->with('success', 'Successfully Saved');
 
-        } catch (\Exception $e) {
-            return back();
-        }
+        // } catch (\Exception $e) {
+        //     return back();
+        // }
     }
 
     public function storeQuestionsFromOdd($match_id, $details)
@@ -324,16 +324,17 @@ class MatchController extends Controller
             if (count($item1) < 1) continue;
             foreach ($arr2 as $item2)
             {
+                $item2 = json_decode(json_encode($item2), true);
                 if (count($item2) < 1) continue;
-                if ($item1['name'] != $item2->name) continue;
+                if ($item1['name'] != $item2['name']) continue;
 
                 $item['name'] = $item1['name'];
 
-                if (isset($item2->point))
-                    $item['point'] = number_format($item2->point ? ($item1['point'] * ($count - 1) + $item2->point) / $count : 0, 2);
+                if (isset($item2['point']))
+                    $item['point'] = number_format($item2['point'] ? ($item1['point'] * ($count - 1) + $item2['point']) / $count : 0, 2);
 
-                if (isset($item2->price))
-                    $item['price'] = number_format($item2->price ? ($item1['price'] * ($count - 1) + $item2->price) / $count : 0, 2);
+                if (isset($item2['price']))
+                    $item['price'] = number_format($item2['price'] ? ($item1['price'] * ($count - 1) + $item2['price']) / $count : 0, 2);
 
                 break;
             }
