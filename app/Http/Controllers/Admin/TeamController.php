@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\Upload;
 use App\Models\GameCategory;
 use App\Models\GameTeam;
+use App\Models\GameTournament;
 use Illuminate\Http\Request;
 use Stevebauman\Purify\Facades\Purify;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
+use App\Models\ContentOdd;
+
 
 class TeamController extends Controller
 {
@@ -18,7 +22,56 @@ class TeamController extends Controller
     {
         $data['teams'] = GameTeam::with('gameCategory')->orderBy('id', 'desc')->get();
         $data['categories'] = GameCategory::whereStatus(1)->orderBy('name','asc')->get();
+        $data['teams_from_odds'] = json_decode($this::teamsFromOdds());
         return view('admin.team.list', $data);
+    }
+
+    public function teamsFromOdds()
+    {
+        $content = ContentOdd::where('name', 'Odds')->orderBy('id', 'desc')->limit(1)->get()->toArray();
+        if (count($content) < 1)
+        {
+            return "[]";
+        }
+
+        $matches = json_decode($content[0]['content']);
+        $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+        $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
+
+        $teams = [];
+        foreach ($matches as &$match) {
+            $tour_id = array_search($match->sport_title, array_column($tours, 'name'));
+            if ($tour_id === false) continue;
+
+            $tour = $tours[$tour_id];
+            $category = $tour['game_category'];
+
+            $exist = array_search($match->home_team, $added_teams);
+            if ($exist !== false) continue;
+
+            $teams[$match->home_team] = [
+                'key' => $match->home_team,
+                'name' => $match->home_team,
+                'sport' => $tour['name'],
+                'category' => $category['name'],
+                'category_id' => $category['id'],
+                'active' => true,
+            ];
+
+            $exist = array_search($match->away_team, $added_teams);
+            if ($exist !== false) continue;
+
+            $teams[$match->away_team] = [
+                'key' => $match->away_team,
+                'name' => $match->away_team,
+                'sport' => $tour['name'],
+                'category' => $category['name'],
+                'category_id' => $category['id'],
+                'active' => true,
+            ];
+        }
+
+        return json_encode(array_values($teams));
     }
 
     public function storeTeam(Request $request)
@@ -65,6 +118,47 @@ class TeamController extends Controller
             $gameTeam->status = isset($purifiedData['status']) == 'true' ? 1 : 0;
 
             $gameTeam->save();
+            return back()->with('success', 'Successfully Saved');
+
+        } catch (\Exception $e) {
+            return back();
+        }
+    }
+
+    public function storeTeamsFromOdd(Request $request)
+    {
+
+        $names = $request->get('checks_add');
+        $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+
+        $teams = [];
+        for($i = 0; $i < count($names); $i++)
+        {
+            list($name, $category, $status) = explode(":", $names[$i]);
+            $exist = array_search($name, $added_teams);
+
+            $team = [
+                'name' => $name,
+                'category_id' => $category,
+                'image' => 'odd.png',
+                'status' => $status,
+            ];
+            array_push($teams, $team);
+        }
+
+        try {
+
+            foreach($teams as $team)
+            {
+                $gameTeam = new GameTeam();
+                $gameTeam->name = $team['name'];
+                $gameTeam->category_id = $team['category_id'];
+                $gameTeam->image = $team['image'];
+                $gameTeam->status = $team['status'];
+
+                $gameTeam->save();
+            }
+
             return back()->with('success', 'Successfully Saved');
 
         } catch (\Exception $e) {
