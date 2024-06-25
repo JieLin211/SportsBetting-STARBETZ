@@ -229,14 +229,15 @@ class MatchController extends Controller
                 $match->team1_id = $team1;
                 $match->team2_id = $team2;
                 $match->start_date = $commence_time;
-                $match->end_date = date('Y-m-d\Th:i:sZ', strtotime($commence_time. ' + 1 days'));
+                $end_time = date('Y-m-d\Th:i:sZ', strtotime($commence_time. ' + 1 days'));
+                $match->end_date = $end_time;
                 $match->status = 1;
 
                 $match->save();
 
                 $detail_id = array_search($id, array_column($matches, 'id'));
                 $details = $matches[$detail_id];
-                $this->storeQuestionsFromOdd($match->id, $details);
+                $this->storeQuestionsFromOdd($match->id, $details, $end_time);
             }
 
             return back()->with('success', 'Successfully Saved');
@@ -246,7 +247,7 @@ class MatchController extends Controller
         }
     }
 
-    public function storeQuestionsFromOdd($match_id, $details)
+    public function storeQuestionsFromOdd($match_id, $details, $end_time)
     {
         $home_team = $details->home_team;
         $away_team = $details->away_team;
@@ -310,9 +311,9 @@ class MatchController extends Controller
             }
         }
 
-        $this->storeQuestionFrom($match_id, $h2h, 'MoneyLine');
-        $this->storeQuestionFrom($match_id, $spreads, 'Handicaps');
-        $this->storeQuestionFrom($match_id, $totals, 'Over / Under');
+        $this->storeQuestionFrom($match_id, $h2h, 'MoneyLine', $end_time);
+        $this->storeQuestionFrom($match_id, $spreads, 'Handicaps', $end_time);
+        $this->storeQuestionFrom($match_id, $totals, 'Over / Under', $end_time);
     }
 
     public function average($arr1, $arr2, $count)
@@ -345,14 +346,14 @@ class MatchController extends Controller
         return $result;
     }
 
-    public function storeQuestionFrom($match_id, $data, $title)
+    public function storeQuestionFrom($match_id, $data, $title, $end_time)
     {
         $betQues = new GameQuestions();
         $betQues->match_id = $match_id;
         $betQues->creator_id = Auth::guard('admin')->id();
         $betQues->name = $title;
         $betQues->status = 1;
-        $betQues->end_time = Carbon::parse('2024-06-25');
+        $betQues->end_time = $end_time;
         $betQues->save();
 
         foreach ($data as $item) {
