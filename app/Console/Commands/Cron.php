@@ -6,6 +6,7 @@ use App\Http\Traits\Notify;
 use App\Models\BetInvest;
 use App\Models\GameMatch;
 use App\Models\GameQuestions;
+use App\Models\ContentOdd;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
 use Facades\App\Services\BasicService;
@@ -18,7 +19,7 @@ class Cron extends Command
      *
      * @var string
      */
-    protected $signature = 'cron:run';
+    protected $signature = 'cron:status';
 
     /**
      * The console command description.
