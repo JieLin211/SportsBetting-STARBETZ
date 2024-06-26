@@ -17,4 +17,5 @@ return [
     "Golf" => '<i class="far fa-golf-club" aria-hidden="true"></i>',
     "Dice" => '<i class="far fa-dice" aria-hidden="true"></i>',
     "Badminton" => '<i class="far fa-shuttlecock" aria-hidden="true"></i>',
+    "Normal" => '<i class="far fa-person-running" aria-hidden="true"></i>',
 ];
