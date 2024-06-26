@@ -5,6 +5,7 @@ namespace App\Console;
 use App\Console\Commands\BinanceGetStatus;
 use App\Console\Commands\BlockIoIPN;
 use App\Console\Commands\Cron;
+use App\Console\Commands\FetchMatch;
 use App\Console\Commands\PayoutCryptoCurrencyUpdateCron;
 use App\Console\Commands\PayoutCurrencyUpdateCron;
 use App\Models\Gateway;
@@ -21,6 +22,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         BlockIoIPN::class,
         Cron::class,
+        FetchMatch::class,
         BinanceGetStatus::class,
         PayoutCryptoCurrencyUpdateCron::class,
         PayoutCurrencyUpdateCron::class,
@@ -51,6 +53,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('cron:status')->hourly();
         $schedule->command('payout-status:update')->everyFiveMinutes();
+        // $schedule->command('cron:fetch')->hourly();
     }
 
     /**
