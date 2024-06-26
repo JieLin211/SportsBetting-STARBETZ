@@ -26,13 +26,11 @@ class CategoryController extends Controller
 
     public function categoriesFromOdds()
     {
-        $content = ContentOdd::where('name', 'Sport')->orderBy('id', 'desc')->limit(1)->get()->toArray();
-        if (count($content) < 1)
-        {
-            return "[]";
-        }
+        $contentCtrl = new ContentController();
+        $content = $contentCtrl->fetchFromOdds('/sports', '');
+        if ($content == null) return "[]";
 
-        $sports = json_decode($content[0]['content']);
+        $sports = json_decode($content);
         $added_categories = GameCategory::orderBy('id', 'desc')->get()->pluck('name')->toArray();
 
         $categories = [];

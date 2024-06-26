@@ -20,6 +20,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\ContentOdd;
 
+use App\Http\Controllers\Admin\ContentController;
+
+
 
 class MatchController extends Controller
 {
@@ -78,13 +81,11 @@ class MatchController extends Controller
 
     public function matchesFromOdds()
     {
-        $content = ContentOdd::where('name', 'Odds')->orderBy('id', 'desc')->limit(1)->get()->toArray();
-        if (count($content) < 1)
-        {
-            return "[]";
-        }
+        $contentCtrl = new ContentController();
+        $content = $contentCtrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
+        if ($content == null) return "[]";
 
-        $matches = json_decode($content[0]['content']);
+        $matches = json_decode($content);
         $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
 
         $to_add_matches = [];
@@ -206,13 +207,11 @@ class MatchController extends Controller
 
     public function storeMatchesFromOdd(Request $request)
     {
+        $contentCtrl = new ContentController();
+        $content = $contentCtrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
 
-        $content = ContentOdd::where('name', 'Odds')->orderBy('id', 'desc')->limit(1)->get()->toArray();
         $matches = [];
-        if (count($content) > 0)
-        {
-            $matches = json_decode($content[0]['content']);
-        }
+        if ($content != null) $matches = json_decode($content);
 
         $names = $request->get('checks_add');
         $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();

@@ -24,14 +24,14 @@ class TournamentController extends Controller
 
     public function tournamentFromOdds()
     {
-        $content = ContentOdd::where('name', 'Sport')->orderBy('id', 'desc')->limit(1)->get()->toArray();
-        if (count($content) < 1)
+        $contentCtrl = new ContentController();
+        $content = $contentCtrl->fetchFromOdds('/sports', '');
+        if ($content == null)
         {
             return "[]";
         }
 
-        $sports = json_decode($content[0]['content']);
-
+        $sports = json_decode($content);
         $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('name')->toArray();
         $categories = GameCategory::whereStatus(1)->orderBy('name','asc')->get()->pluck('name')->toArray();
 

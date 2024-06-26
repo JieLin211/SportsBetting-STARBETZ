@@ -204,23 +204,33 @@ class ContentController extends Controller
         return back()->with('success', 'Content has been deleted');
     }
 
-    public function syncOdds()
+    public function fetchFromOdds($url, $query)
     {
         $api_key = env("ODD_API_KEY", '');
         $api_url = env("ODD_API_URL", '');
 
-        $response = Http::get($api_url.'/v4/sports/?apiKey='.$api_key);
+        $response = Http::get($api_url.'/v4'.$url.'/?'.$query.'&apiKey='.$api_key);
         if ( $response->successful() ) {
+            return $response->body();
+        }
+
+        return null;
+    }
+
+    public function syncOdds()
+    {
+        $result = $this->fetchFromOdds('/sports', '');
+        if ( $result != null ) {
             $contentOdds = new ContentOdd();
             $contentOdds->name = 'Sport';
-            $contentOdds->content = $response->body();
+            $contentOdds->content = json_encode($result);
             $contentOdds->save();
         } else {
             return back()->with('error', 'Sports Sync with Odds failed. Try again later.');
         }
 
-        $response = Http::get($api_url.'/v4/sports/upcoming/odds/?regions=us,us2,uk,eu,au&markets=h2h,totals,spreads&apiKey='.$api_key);
-        if ( $response->successful() ) {
+        $details = $this->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
+        if ( $result != null ) {
             $contentOdds = new ContentOdd();
             $contentOdds->name = 'Odds';
             $contentOdds->content = $response->body();

@@ -28,13 +28,11 @@ class TeamController extends Controller
 
     public function teamsFromOdds()
     {
-        $content = ContentOdd::where('name', 'Odds')->orderBy('id', 'desc')->limit(1)->get()->toArray();
-        if (count($content) < 1)
-        {
-            return "[]";
-        }
+        $contentCtrl = new ContentController();
+        $content = $contentCtrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
+        if ($content == null) return "[]";
 
-        $matches = json_decode($content[0]['content']);
+        $matches = json_decode($content);
         $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
         $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
 
