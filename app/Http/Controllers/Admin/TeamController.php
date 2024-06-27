@@ -138,7 +138,7 @@ class TeamController extends Controller
             $team = [
                 'name' => $name,
                 'category_id' => $category,
-                'image' => 'odd.png',
+//                'image' => 'odd.png',
                 'status' => $status,
             ];
             array_push($teams, $team);

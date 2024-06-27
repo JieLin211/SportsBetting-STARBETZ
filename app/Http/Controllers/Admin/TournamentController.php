@@ -32,19 +32,19 @@ class TournamentController extends Controller
         }
 
         $sports = json_decode($content);
-        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('odd_key')->toArray();
         $categories = GameCategory::whereStatus(1)->orderBy('name','asc')->get()->pluck('name')->toArray();
 
         $tournaments = [];
         foreach ($sports as &$sport) {
-            $exist = array_search($sport->title, $added_tournaments);
+            $exist = in_array($sport->key, $added_tournaments);
             if ($exist !== false) continue;
 
-            $category = array_search($sport->group, $categories);
+            $category = in_array($sport->group, $categories);
             if ($category === false) continue;
 
-            $tournaments[$sport->title] = [
-                'key' => $sport->title,
+            $tournaments[] = [
+                'key' => $sport->key,
                 'title' => $sport->title,
                 'group' => $sport->group,
                 'active' => $sport->active,
@@ -52,7 +52,8 @@ class TournamentController extends Controller
             ];
         }
 
-        return json_encode(array_values($tournaments));
+//        return json_encode(array_values($tournaments));
+        return json_encode($tournaments);
     }
 
     public function storeTournament(Request $request)
@@ -99,22 +100,23 @@ class TournamentController extends Controller
     {
 
         $names = $request->get('checks_add');
-        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+//        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('name')->toArray();
         $categories = GameCategory::whereStatus(1)->orderBy('name','asc')->get()->toArray();
 
         $tournaments = [];
         for($i = 0; $i < count($names); $i++)
         {
-            list($name, $group, $status) = explode(":", $names[$i]);
-            $exist = array_search($name, $added_tournaments);
+            list($key, $title, $group, $status) = explode(":", $names[$i]);
+//            $exist = array_search($name, $added_tournaments);
             $id = array_search($group, array_column($categories, 'name'));
 
             $tournament = [
-                'name' => $name,
+                'name' => $title,
                 'category_id' => $categories[$id]['id'],
                 'status' => $status,
+                'odd_key' => $key,
             ];
-            array_push($tournaments, $tournament);
+            $tournaments[] = $tournament;
         }
 
         try {
@@ -123,6 +125,7 @@ class TournamentController extends Controller
             {
                 $gameTournament = new GameTournament();
                 $gameTournament->name = $tournament['name'];
+                $gameTournament->odd_key = $tournament['odd_key'];
                 $gameTournament->category_id = $tournament['category_id'];
                 $gameTournament->status = $tournament['status'];
 

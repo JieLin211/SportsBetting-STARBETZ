@@ -88,9 +88,15 @@ class MatchController extends Controller
         $matches = json_decode($content);
         $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
 
+        $added_matches = GameMatch::get()->pluck('odd_id')->toArray();
+
         $to_add_matches = [];
         foreach ($matches as &$match) {
-            $tour_id = array_search($match->sport_title, array_column($tours, 'name'));
+            if (in_array($match->id, $added_matches)) {
+                continue;
+            }
+
+            $tour_id = array_search($match->sport_key, array_column($tours, 'odd_key'));
             if ($tour_id === false) continue;
 
             $tour = $tours[$tour_id];
@@ -106,10 +112,13 @@ class MatchController extends Controller
             if ($away_id === false) continue;
             $away_team = $teams[$away_id];
 
-            array_push($to_add_matches, [
+            $to_add_matches[] = [
                 'key' => $match->id,
                 'commence_time' => $match->commence_time,
-                'start_at' => date('m/d/Y h:m', strtotime($match->commence_time)),
+//                'start_at' => date('m/d/Y h:m', strtotime($match->commence_time)) Carbon,
+                'start_at' => Carbon::parse($match->commence_time, 'UTC')
+                    ->setTimezone(config('app.timezone'))
+                    ->format('m/d/Y h:i'),
                 'category_id' => $category['id'],
                 'category' => $category['name'],
                 'tour_id' => $tour['id'],
@@ -119,7 +128,7 @@ class MatchController extends Controller
                 'team02' => $away_team['name'],
                 'team02_id' => $away_team['id'],
                 'active' => true,
-            ]);
+            ];
         }
 
         return json_encode($to_add_matches);
@@ -214,28 +223,44 @@ class MatchController extends Controller
         if ($content != null) $matches = json_decode($content);
 
         $names = $request->get('checks_add');
-        $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+//        $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+
+        $added_matches = GameMatch::get()->pluck('odd_id')->toArray();
 
         $teams = [];
         try {
             for($i = 0; $i < count($names); $i++)
             {
-                list($id, $team1, $team2, $category, $tour, $commence_time) = explode(":", $names[$i]);
+                list($id, $team1, $team2, $category, $tour) = explode(":", $names[$i]);
+
+                $detail_id = array_search($id, array_column($matches, 'id'));
+                if ($detail_id === false) {
+                    continue;
+                }
+                $details = $matches[$detail_id];
+
+                if (in_array($id, $added_matches)) {
+                    continue;
+                }
 
                 $match = new GameMatch();
                 $match->category_id = $category;
                 $match->tournament_id = $tour;
                 $match->team1_id = $team1;
                 $match->team2_id = $team2;
-                $match->start_date = $commence_time;
-                $end_time = date('Y-m-d\Th:i:sZ', strtotime($commence_time. ' + 1 days'));
+                $match->start_date = Carbon::parse($details->commence_time, 'UTC')
+                    ->setTimezone(config('app.timezone'))
+                    ->format('Y-m-d H:i:s');
+                $end_time = Carbon::parse($details->commence_time, 'UTC')
+                    ->setTimezone(config('app.timezone'))
+                    ->addDay()
+                    ->format('Y-m-d H:i:s');
                 $match->end_date = $end_time;
                 $match->status = 1;
+                $match->odd_id = $id;
 
                 $match->save();
 
-                $detail_id = array_search($id, array_column($matches, 'id'));
-                $details = $matches[$detail_id];
                 $this->storeQuestionsFromOdd($match->id, $details, $end_time);
             }
 
@@ -271,7 +296,7 @@ class MatchController extends Controller
             "price" => 0,
             "point" => 0,
         ]];
-        
+
         $totals = [[
             "name" => 'Over',
             "price" => 0,
@@ -285,12 +310,12 @@ class MatchController extends Controller
         $h2h_count = 0;
         $spreads_count = 0;
         $totals_count = 0;
-        
+
         $bookmakers = $details->bookmakers;
         foreach ($bookmakers as $bookmaker)
         {
             $markets = $bookmaker->markets;
-            
+
             foreach ($markets as $market)
             {
                 if ($market->key == 'h2h') {
@@ -483,11 +508,11 @@ class MatchController extends Controller
     {
 		$match = GameMatch::with(['gameTeam1', 'gameTeam2'])
         ->findOrFail($match_id);
-        
+
         if($match->status == '2'){
             return redirect()->route('admin.listMatch')->with('error','Match already closed.');
         }
-        
+
         $data['match'] = $match;
         return view('admin.match.freeQuestion', $data);
     }

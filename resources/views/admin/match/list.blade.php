@@ -111,7 +111,7 @@
                         <th scope="col">@lang('Active Question')</th>
                         <th scope="col">@lang('Tournament')</th>
                         <th scope="col">@lang('Category')</th>
-                        <th scope="col">@lang('Start Date')</th>
+                        <th scope="col">@lang('Start Date') ({{ config('app.timezone') }})</th>
                         <th scope="col" class="text-center">@lang('Status')</th>
 
                         @if(adminAccessRoute(config('role.manage_game.access.edit')))
@@ -124,7 +124,7 @@
                     @forelse($matches as  $item)
                         <tr>
                             <td class="text-center">
-                                <input type="checkbox" id="chk-{{ $item->id }}" data-level="1" 
+                                <input type="checkbox" id="chk-{{ $item->id }}" data-level="1"
                                        class="form-check-input row-tic tic-check" name="check" value="{{$item->id}}"
                                        data-id="{{ $item->id }}">
                                 <label for="chk-{{ $item->id }}"></label>
@@ -154,6 +154,9 @@
                                         <small
                                             class="text-dark font-weight-bold">{{shortName(optional($item->gameTeam2)->name)}}</small>
                                     </div>
+                                    @if($item->odd_id)
+                                        <span class="badge badge-primary badge-pill ml-1">Odd</span>
+                                    @endif
                                 </div>
                             </td>
                             <td data-label="@lang('Active Question')">
@@ -384,7 +387,7 @@
                         <div class="row  mb-3">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="text-dark">@lang('Start Date') <span
+                                    <label class="text-dark">@lang('Start Date') ({{ config('app.timezone') }}) <span
                                             class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control" name="start_date" id="datepicker"/>
                                     @error('start_date')
@@ -394,7 +397,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="text-dark">@lang('End Date') <span
+                                    <label class="text-dark">@lang('End Date') ({{ config('app.timezone') }}) <span
                                             class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control" name="end_date" id="datepicker"/>
                                     @error('end_date')
@@ -421,9 +424,9 @@
         </div>
     </div>
 
-    {{-- New MODAL From Odd --}}
+    {{-- New From Odd MODAL --}}
     <div id="newOddModal" class="modal fade show" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header modal-colored-header bg-primary">
                     <h5 class="modal-title">@lang('Add New From Odd')</h5>
@@ -446,9 +449,9 @@
 
                                     <th scope="col">@lang('Team 01')</th>
                                     <th scope="col">@lang('Team 02')</th>
-                                    <th scope="col" class="text-center">@lang('Tour')</th>
-                                    <th scope="col" class="text-center">@lang('Game Category')</th>
-                                    <th scope="col" class="text-center">@lang('Start Date')</th>
+                                    <th scope="col">@lang('Tour')</th>
+                                    <th scope="col">@lang('Game Category')</th>
+                                    <th scope="col">@lang('Start Date') ({{ config('app.timezone') }})</th>
                                     <th scope="col" class="text-center">@lang('Status')</th>
                                 </tr>
                                 </thead>
@@ -458,7 +461,7 @@
                                         <td class="text-center">
                                             <input type="checkbox" id="chk-{{ $item->key }}" data-level="2"
                                                 class="form-check-input row-tic tic-check" name="checks_add[]"
-                                                value="{{$item->key}}:{{$item->team01_id}}:{{$item->team02_id}}:{{$item->category_id}}:{{$item->tour_id}}:{{$item->commence_time}}"
+                                                value="{{$item->key}}:{{$item->team01_id}}:{{$item->team02_id}}:{{$item->category_id}}:{{$item->tour_id}}"
                                                 data-id="{{ $item->key }}">
                                             <label for="chk-{{ $item->key }}"></label>
                                         </td>
@@ -466,11 +469,11 @@
                                         <td data-label="@lang('Team 01')">
                                             {{ $item->team01 }}
                                         </td>
-                                        
+
                                         <td data-label="@lang('Team 02')">
                                             {{ $item->team02 }}
                                         </td>
-                                        
+
                                         <td data-label="@lang('Tournament')">
                                             {{ $item->tour }}
                                         </td>
@@ -596,7 +599,7 @@
                         <div class="row  mb-3">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="text-dark">@lang('Start Date') <span
+                                    <label class="text-dark">@lang('Start Date') ({{ config('app.timezone') }}) <span
                                             class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control" name="start_date" id="editStartDate"/>
                                     @error('start_date')
@@ -606,7 +609,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="text-dark">@lang('End Date') <span
+                                    <label class="text-dark">@lang('End Date') ({{ config('app.timezone') }}) <span
                                             class="text-danger">*</span></label>
                                     <input type="datetime-local" class="form-control end_date" name="end_date" id="editEndDate"/>
                                     @error('end_date')

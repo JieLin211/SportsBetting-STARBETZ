@@ -32,7 +32,4 @@ class GameMatch extends Model
     {
         return $this->hasMany(GameQuestions::class,'match_id')->where('status',1);
     }
-
-
-
 }

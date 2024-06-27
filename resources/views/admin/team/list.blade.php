@@ -17,7 +17,7 @@
                         <span><i class="fa fa-plus-circle"></i> @lang('Add New From Odd')</span>
                     </a>
                 </div>
-                
+
                 <div class="dropdown mb-2 text-right">
                     <button class="btn btn-sm  btn-dark dropdown-toggle" type="button" id="dropdownMenuButton"
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -54,7 +54,7 @@
                     @forelse($teams as  $item)
                         <tr>
                             <td class="text-center">
-                                <input type="checkbox" id="chk-{{ $item->id }}" data-level="1" 
+                                <input type="checkbox" id="chk-{{ $item->id }}" data-level="1"
                                        class="form-check-input row-tic tic-check" name="check" value="{{$item->id}}"
                                        data-id="{{ $item->id }}">
                                 <label for="chk-{{ $item->id }}"></label>
@@ -242,7 +242,7 @@
         </div>
     </div>
 
-    {{-- New MODAL From Odd --}}
+    {{-- New From Odd MODAL --}}
     <div id="newOddModal" class="modal fade show" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -284,7 +284,7 @@
                                         <td data-label="@lang('Name')">
                                             {{ $item->name }}
                                         </td>
-                                        
+
                                         <td data-label="@lang('Tournament')">
                                             {{ $item->sport }}
                                         </td>

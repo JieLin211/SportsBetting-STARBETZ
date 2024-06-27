@@ -63,7 +63,7 @@
                     @forelse($tournaments as  $item)
                         <tr>
                             <td class="text-center">
-                                <input type="checkbox" id="chk-{{ $item->id }}" data-level="1" 
+                                <input type="checkbox" id="chk-{{ $item->id }}" data-level="1"
                                        class="form-check-input row-tic tic-check" name="check" value="{{$item->id}}"
                                        data-id="{{ $item->id }}">
                                 <label for="chk-{{ $item->id }}"></label>
@@ -72,6 +72,9 @@
                             <td data-label="@lang('SL No.')" class="text-center">{{ $loop->index + 1 }}</td>
                             <td data-label="@lang('Name')">
                                 {{ $item->name }}
+                                @if($item->odd_key)
+                                    <span class="badge badge-primary badge-pill">Odd</span>
+                                @endif
                             </td>
                             <td data-label="@lang('Category')" class="font-weight-bold">
                                 {!! optional($item->gameCategory)->icon !!}
@@ -221,7 +224,7 @@
         </div>
     </div>
 
-    {{-- New MODAL From Odd --}}
+    {{-- New From Odd MODAL --}}
     <div id="newOddModal" class="modal fade show" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -254,7 +257,7 @@
                                     <tr>
                                         <td class="text-center">
                                             <input type="checkbox" id="chk-{{ $item->key }}" data-level="2"
-                                                class="form-check-input row-tic tic-check" name="checks_add[]" value="{{$item->key}}:{{$item->group}}:{{$item->active}}"
+                                                class="form-check-input row-tic tic-check" name="checks_add[]" value="{{$item->key}}:{{$item->title}}:{{$item->group}}:{{$item->active}}"
                                                 data-id="{{ $item->key }}">
                                             <label for="chk-{{ $item->key }}"></label>
                                         </td>
@@ -262,7 +265,7 @@
                                         <td data-label="@lang('Name')">
                                             {{ $item->title }}
                                         </td>
-                                        
+
                                         <td data-label="@lang('Game Category')">
                                             {{ $item->group }}
                                         </td>
