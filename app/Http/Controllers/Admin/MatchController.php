@@ -385,7 +385,14 @@ class MatchController extends Controller
             $betOpt->creator_id = Auth::guard('admin')->id();
             $betOpt->question_id = $betQues->id;
             $betOpt->match_id = $betQues->match_id;
-            $betOpt->option_name = $item['name'];
+
+            if (isset($item['point'])) {
+                $point = floor($item['point']) + 0.5;
+                $betOpt->option_name = $item['name'] . " | " . $point;
+            } else {
+                $betOpt->option_name = $item['name'];
+            }
+
             $betOpt->ratio = $item['price'];
             $betOpt->status = 1;
             $betOpt->save();
