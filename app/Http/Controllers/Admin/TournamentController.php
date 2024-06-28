@@ -37,11 +37,8 @@ class TournamentController extends Controller
 
         $tournaments = [];
         foreach ($sports as &$sport) {
-            $exist = in_array($sport->key, $added_tournaments);
-            if ($exist !== false) continue;
-
-            $category = in_array($sport->group, $categories);
-            if ($category === false) continue;
+            if (in_array($sport->key, $added_tournaments)) continue;
+            if (!in_array($sport->group, $categories)) continue;
 
             $tournaments[] = [
                 'key' => $sport->key,
@@ -52,7 +49,6 @@ class TournamentController extends Controller
             ];
         }
 
-//        return json_encode(array_values($tournaments));
         return json_encode($tournaments);
     }
 
@@ -100,34 +96,23 @@ class TournamentController extends Controller
     {
 
         $names = $request->get('checks_add');
-//        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('odd_key')->toArray();
         $categories = GameCategory::whereStatus(1)->orderBy('name','asc')->get()->toArray();
-
-        $tournaments = [];
-        for($i = 0; $i < count($names); $i++)
-        {
-            list($key, $title, $group, $status) = explode(":", $names[$i]);
-//            $exist = array_search($name, $added_tournaments);
-            $id = array_search($group, array_column($categories, 'name'));
-
-            $tournament = [
-                'name' => $title,
-                'category_id' => $categories[$id]['id'],
-                'status' => $status,
-                'odd_key' => $key,
-            ];
-            $tournaments[] = $tournament;
-        }
 
         try {
 
-            foreach($tournaments as $tournament)
+            for($i = 0; $i < count($names); $i++)
             {
+                list($key, $title, $group, $status) = explode(":", $names[$i]);
+
+                if (in_array($key, $added_tournaments)) continue;
+                $id = array_search($group, array_column($categories, 'name'));
+
                 $gameTournament = new GameTournament();
-                $gameTournament->name = $tournament['name'];
-                $gameTournament->odd_key = $tournament['odd_key'];
-                $gameTournament->category_id = $tournament['category_id'];
-                $gameTournament->status = $tournament['status'];
+                $gameTournament->name = $title;
+                $gameTournament->odd_key = $key;
+                $gameTournament->category_id = $categories[$id]['id'];
+                $gameTournament->status = $status;
 
                 $gameTournament->save();
             }

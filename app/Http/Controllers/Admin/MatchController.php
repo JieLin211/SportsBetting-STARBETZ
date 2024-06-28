@@ -92,9 +92,7 @@ class MatchController extends Controller
 
         $to_add_matches = [];
         foreach ($matches as &$match) {
-            if (in_array($match->id, $added_matches)) {
-                continue;
-            }
+            if (in_array($match->id, $added_matches)) continue;
 
             $tour_id = array_search($match->sport_key, array_column($tours, 'odd_key'));
             if ($tour_id === false) continue;
@@ -115,10 +113,9 @@ class MatchController extends Controller
             $to_add_matches[] = [
                 'key' => $match->id,
                 'commence_time' => $match->commence_time,
-//                'start_at' => date('m/d/Y h:m', strtotime($match->commence_time)) Carbon,
                 'start_at' => Carbon::parse($match->commence_time, 'UTC')
-                    ->setTimezone(config('app.timezone'))
-                    ->format('m/d/Y h:i'),
+                        ->setTimezone(config('app.timezone'))
+                        ->format('m/d/Y h:i'),
                 'category_id' => $category['id'],
                 'category' => $category['name'],
                 'tour_id' => $tour['id'],
@@ -223,26 +220,20 @@ class MatchController extends Controller
         if ($content != null) $matches = json_decode($content);
 
         $names = $request->get('checks_add');
-//        $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
-
+        $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
         $added_matches = GameMatch::get()->pluck('odd_id')->toArray();
 
-        $teams = [];
         try {
             for($i = 0; $i < count($names); $i++)
             {
                 list($id, $team1, $team2, $category, $tour) = explode(":", $names[$i]);
 
                 $detail_id = array_search($id, array_column($matches, 'id'));
-                if ($detail_id === false) {
-                    continue;
-                }
+                if ($detail_id === false) continue;
+
+                if (in_array($id, $added_matches)) continue;
+
                 $details = $matches[$detail_id];
-
-                if (in_array($id, $added_matches)) {
-                    continue;
-                }
-
                 $match = new GameMatch();
                 $match->category_id = $category;
                 $match->tournament_id = $tour;

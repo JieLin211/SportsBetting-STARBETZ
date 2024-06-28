@@ -44,8 +44,7 @@ class TeamController extends Controller
             $tour = $tours[$tour_id];
             $category = $tour['game_category'];
 
-            $exist = array_search($match->home_team, $added_teams);
-            if ($exist !== false) continue;
+            if (in_array($match->home_team, $added_teams)) continue;
 
             $teams[$match->home_team] = [
                 'key' => $match->home_team,
@@ -56,8 +55,7 @@ class TeamController extends Controller
                 'active' => true,
             ];
 
-            $exist = array_search($match->away_team, $added_teams);
-            if ($exist !== false) continue;
+            if (in_array($match->away_team, $added_teams)) continue;
 
             $teams[$match->away_team] = [
                 'key' => $match->away_team,
@@ -127,32 +125,20 @@ class TeamController extends Controller
     {
 
         $names = $request->get('checks_add');
-        $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
-
-        $teams = [];
-        for($i = 0; $i < count($names); $i++)
-        {
-            list($name, $category, $status) = explode(":", $names[$i]);
-            $exist = array_search($name, $added_teams);
-
-            $team = [
-                'name' => $name,
-                'category_id' => $category,
-//                'image' => 'odd.png',
-                'status' => $status,
-            ];
-            array_push($teams, $team);
-        }
+        $added_teams = GameTeam::orderBy('id', 'desc')->get()->toArray();
 
         try {
-
-            foreach($teams as $team)
+            for($i = 0; $i < count($names); $i++)
             {
+                list($name, $category, $status) = explode(":", $names[$i]);
+                $search = $name . "|" . $category;
+                if (in_array($search, $added_teams)) continue;
+
                 $gameTeam = new GameTeam();
-                $gameTeam->name = $team['name'];
-                $gameTeam->category_id = $team['category_id'];
-                $gameTeam->image = $team['image'];
-                $gameTeam->status = $team['status'];
+                $gameTeam->name = $name;
+                $gameTeam->category_id = $category;
+                // $gameTeam->image = 'odd.png';
+                $gameTeam->status = $status;
 
                 $gameTeam->save();
             }

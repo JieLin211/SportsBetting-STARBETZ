@@ -35,10 +35,10 @@ class CategoryController extends Controller
 
         $categories = [];
         foreach ($sports as &$sport) {
-            $exist = array_search($sport->group, $added_categories);
-            if ($exist !== false) continue;
+            if (in_array($sport->group, $added_categories)) continue;
+            if (in_array($sport->group, array_column($categories, 'name'))) continue;
 
-            $categories[$sport->group] = [
+            $categories[] = [
                 'key' => $sport->group,
                 'title' => $sport->title,
                 'name' => $sport->group,
@@ -46,7 +46,7 @@ class CategoryController extends Controller
             ];
         }
 
-        return json_encode(array_values($categories));
+        return json_encode($categories);
     }
 
     public function storeCategory(Request $request)
@@ -99,26 +99,15 @@ class CategoryController extends Controller
             return back()->withInput()->withErrors(['icon.required' => 'Icon field is required']);
         }
 
-        $categories = [];
-        for($i = 0; $i < count($names); $i++)
-        {
-            list($name, $status) = explode(":", $names[$i]);
-            $category = [
-                'name' => $name,
-                'icon' => $icons[$i],
-                'status' => $status,
-            ];
-            array_push($categories, $category);
-        }
-
         try {
-
-            foreach($categories as $category)
+            for($i = 0; $i < count($names); $i++)
             {
+                list($name, $status) = explode(":", $names[$i]);
+
                 $gameCategory = new GameCategory();
-                $gameCategory->name = $category['name'];
-                $gameCategory->icon = $category['icon'];
-                $gameCategory->status = $category['status'];
+                $gameCategory->name = $name;
+                $gameCategory->icon = $icons[$i];
+                $gameCategory->status = $status;
 
                 $gameCategory->save();
             }
