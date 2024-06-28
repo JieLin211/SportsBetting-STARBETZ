@@ -16,3 +16,4 @@ yarn-error.log
 /.vscode
 /public/error_log
 /public/.htaccess
+/public/assets/uploads
