@@ -71,10 +71,10 @@
                         data-toggle="modal">
                             <span><i class="fa fa-plus-circle"></i> @lang('Add New')</span>
                         </a>
-                        <a href="javascript:void(0)" class="btn btn-sm btn-primary mr-2" data-target="#newOddModal"
+                        <!-- <a href="javascript:void(0)" class="btn btn-sm btn-primary mr-2" data-target="#newOddModal"
                         data-toggle="modal">
                             <span><i class="fa fa-plus-circle"></i> @lang('Add New From Odd')</span>
-                        </a>
+                        </a> -->
                     </div>
                 @endif
 
