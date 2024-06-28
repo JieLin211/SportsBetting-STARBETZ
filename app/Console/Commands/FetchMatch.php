@@ -14,7 +14,7 @@ use App\Models\ContentOdd;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
 use Facades\App\Services\BasicService;
-use App\Http\Controllers\Admin\ContentController;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
@@ -66,8 +66,8 @@ class FetchMatch extends Command
 
     public function createCategories()
     {
-        $contentCtrl = new ContentController();
-        $content = $contentCtrl->fetchFromOdds('/sports', '');
+        $ctrl = new Controller();
+        $content = $ctrl->fetchFromOdds('/sports', '');
         if ($content == null) return;
 
         $sports = json_decode($content);
@@ -75,59 +75,63 @@ class FetchMatch extends Command
         $games = config('games');
         $icon = $games['Normal'];
 
+        $categories = [];
         foreach ($sports as &$sport) {
-            $exist = array_search($sport->group, $added_categories);
-            if ($exist !== false) continue;
+            if (in_array($sport->group, $added_categories)) continue;
+            if (in_array($sport->group, $categories)) continue;
 
+            $categories[] = $sport->group;
+        }
+
+        foreach ($categories as $category) {
             $gameCategory = new GameCategory();
-            $gameCategory->name = $sport->group;
+            $gameCategory->name = $category;
             $gameCategory->icon = $icon;
-            $gameCategory->status = $sport->active;
+            $gameCategory->status = 1;
 
             $gameCategory->save();
-            Log::info('Game Category => ' . $sport->group . '|' . $sport->active . ' - Saved.');
+            Log::info('Game Category => ' . $category . '|1 - Saved.');
         }
     }
 
     public function createTournaments()
     {
-        $contentCtrl = new ContentController();
-        $content = $contentCtrl->fetchFromOdds('/sports', '');
+        $ctrl = new Controller();
+        $content = $ctrl->fetchFromOdds('/sports', '');
         if ($content == null) return;
 
         $sports = json_decode($content);
-        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('name')->toArray();
+        $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('odd_key')->toArray();
         $categories = GameCategory::whereStatus(1)->orderBy('name','asc')->get()->toArray();
 
         $tournaments = [];
         foreach ($sports as &$sport) {
-            $exist = array_search($sport->title, $added_tournaments);
-            if ($exist !== false) continue;
+            if (in_array($sport->key, $added_tournaments)) continue;
 
-            $id = array_search($sport->group, array_column($categories, 'name'));
-            if ($id === false) continue;
+            $idx = array_search($sport->group, array_column($categories, 'name'));
+            if ($idx === false) continue;
 
             $gameTournament = new GameTournament();
             $gameTournament->name = $sport->title;
-            $gameTournament->category_id = $categories[$id]['id'];
+            $gameTournament->category_id = $categories[$idx]['id'];
+            $gameTournament->odd_key = $sport->key;
             $gameTournament->status = $sport->active;
 
             $gameTournament->save();
-            Log::info('Tournament => ' . $sport->title . '|'. $categories[$id]['name'] . '|' . $sport->active . ' - Saved.');
+            Log::info('Tournament => ' . $sport->title . '|'. $categories[$idx]['name'] . '|' . $sport->active . ' - Saved.');
         }
     }
 
     public function createTeams()
     {
-        $contentCtrl = new ContentController();
-        $content = $contentCtrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
+        $ctrl = new Controller();
+        $content = $ctrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
         if ($content == null) return;
 
         $matches = json_decode($content);
         $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
         $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
     
-        $teams = [];
         foreach ($matches as &$match) {
             $tour_id = array_search($match->sport_title, array_column($tours, 'name'));
             if ($tour_id === false) continue;
@@ -136,8 +140,7 @@ class FetchMatch extends Command
             $category = $tour['game_category'];
 
 
-            $exist = array_search($match->home_team, $added_teams);
-            if ($exist !== false) continue;
+            if (in_array($match->home_team, $added_teams)) continue;
 
             $gameTeam = new GameTeam();
             $gameTeam->name = $match->home_team;
@@ -149,8 +152,7 @@ class FetchMatch extends Command
             Log::info('Game Team => ' . $match->home_team . '|'. $category['name'] . ' - Saved.');
 
 
-            $exist = array_search($match->away_team, $added_teams);
-            if ($exist !== false) continue;
+            if (in_array($match->home_team, $added_teams)) continue;
 
             $gameTeam = new GameTeam();
             $gameTeam->name = $match->away_team;
@@ -165,17 +167,19 @@ class FetchMatch extends Command
 
     public function createMatches()
     {
-        $contentCtrl = new ContentController();
-        $content = $contentCtrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
+        $ctrl = new Controller();
+        $content = $ctrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
         if ($content == null) return;
 
         $matches = json_decode($content);
         $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
+        $added_matches = GameMatch::get()->pluck('odd_id')->toArray();
 
-        $to_add_matches = [];
         foreach ($matches as &$match) {
-            $tour_id = array_search($match->sport_title, array_column($tours, 'name'));
+            $tour_id = array_search($match->sport_key, array_column($tours, 'odd_key'));
             if ($tour_id === false) continue;
+
+            if (in_array($match->id, $added_matches)) continue;
 
             $tour = $tours[$tour_id];
             $category = $tour['game_category'];
@@ -191,19 +195,24 @@ class FetchMatch extends Command
             $away_team = $teams[$away_id];
 
             $gameMatch = new GameMatch();
+            $gameMatch->odd_id = $match->id;
             $gameMatch->category_id = $category['id'];
             $gameMatch->tournament_id = $tour['id'];
             $gameMatch->team1_id = $home_team['id'];
             $gameMatch->team2_id = $away_team['id'];
-            $gameMatch->start_date = $match->commence_time;
-            $end_time = date('Y-m-d\Th:i:sZ', strtotime($match->commence_time. ' + 1 days'));
+            $gameMatch->start_date = Carbon::parse($match->commence_time, 'UTC')
+                    ->setTimezone(config('app.timezone'))
+                    ->format('Y-m-d H:i:s');
+            $end_time = Carbon::parse($match->commence_time, 'UTC')
+                    ->setTimezone(config('app.timezone'))
+                    ->addDay()
+                    ->format('Y-m-d H:i:s');
             $gameMatch->end_date = $end_time;
             $gameMatch->status = 1;
 
             $gameMatch->save();
             Log::info('Game Match => ' . $home_team['name'] . ':' . $away_team['name'] . '|'. $tour['name'] . '|' . $match->commence_time . ' - Saved.');
 
-            
             $this->storeQuestionsFromOdd($gameMatch->id, $match, $end_time);
         }
 
@@ -275,7 +284,7 @@ class FetchMatch extends Command
         }
 
         $this->storeQuestionFrom($match_id, $h2h, 'MoneyLine', $end_time);
-        $this->storeQuestionFrom($match_id, $spreads, 'Handicaps', $end_time);
+        $this->storeQuestionFrom($match_id, $spreads, 'Spreads', $end_time);
         $this->storeQuestionFrom($match_id, $totals, 'Over / Under', $end_time);
     }
 
@@ -284,8 +293,9 @@ class FetchMatch extends Command
         $result = [];
         foreach ($arr1 as $item1)
         {
-            $item = [];
             if (count($item1) < 1) continue;
+
+            $item = $item1;
             foreach ($arr2 as $item2)
             {
                 $item2 = json_decode(json_encode($item2), true);
@@ -325,7 +335,14 @@ class FetchMatch extends Command
             $betOpt->creator_id = 1;
             $betOpt->question_id = $betQues->id;
             $betOpt->match_id = $betQues->match_id;
-            $betOpt->option_name = $item['name'];
+
+            if (isset($item['point'])) {
+                $point = floor($item['point']) + 0.5;
+                $betOpt->option_name = $item['name'] . " | " . $point;
+            } else {
+                $betOpt->option_name = $item['name'];
+            }
+
             $betOpt->ratio = $item['price'];
             $betOpt->status = 1;
             $betOpt->save();
