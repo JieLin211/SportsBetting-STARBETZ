@@ -13,7 +13,6 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Validator;
 use Stevebauman\Purify\Facades\Purify;
-use Illuminate\Support\Facades\Http;
 
 
 class ContentController extends Controller
@@ -202,19 +201,6 @@ class ContentController extends Controller
         $content = Content::findOrFail($id);
         $content->delete();
         return back()->with('success', 'Content has been deleted');
-    }
-
-    public function fetchFromOdds($url, $query)
-    {
-        $api_key = env("ODD_API_KEY", '');
-        $api_url = env("ODD_API_URL", '');
-
-        $response = Http::get($api_url.'/v4'.$url.'/?'.$query.'&apiKey='.$api_key);
-        if ( $response->successful() ) {
-            return $response->body();
-        }
-
-        return null;
     }
 
     public function syncOdds()
