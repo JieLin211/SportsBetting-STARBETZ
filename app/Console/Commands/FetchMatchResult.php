@@ -130,13 +130,10 @@ class FetchMatchResult extends Command
 
         });
 
-        // Update match end date
         $match_db_obj = GameMatch::where('id', $match['id'])->first();
-        
-        // This should be current time, but for me, it shows 06/28 04:50 my time is 06/29 1:50
-        ==> $match_db_obj->end_date = Carbon::now()
+        $match_db_obj->end_date = Carbon::now()
                 ->setTimezone(config('app.timezone'))
-                ->format('Y-m-d h:i:s');
+                ->format('Y-m-d H:i:s');
         $match_db_obj->update();
     }
 
