@@ -99,6 +99,12 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        'odds' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/odds.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
     ],
 
 ];

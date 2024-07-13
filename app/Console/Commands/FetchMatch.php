@@ -3,21 +3,16 @@
 namespace App\Console\Commands;
 
 use App\Http\Traits\Notify;
-use App\Models\BetInvest;
 use App\Models\GameCategory;
 use App\Models\GameTournament;
 use App\Models\GameTeam;
 use App\Models\GameMatch;
 use App\Models\GameQuestions;
 use App\Models\GameOption;
-use App\Models\ContentOdd;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
-use Facades\App\Services\BasicService;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-
 
 class FetchMatch extends Command
 {
@@ -53,14 +48,10 @@ class FetchMatch extends Command
      */
     public function handle()
     {
-        $now = Carbon::now();
-        $basic = (object)config('basic');
-
         $this->createCategories();
         $this->createTournaments();
         $this->createTeams();
         $this->createMatches();
-
         $this->info('status');
     }
 
@@ -131,7 +122,7 @@ class FetchMatch extends Command
         $matches = json_decode($content);
         $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
         $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
-    
+
         foreach ($matches as &$match) {
             $tour_id = array_search($match->sport_title, array_column($tours, 'name'));
             if ($tour_id === false) continue;
@@ -218,7 +209,7 @@ class FetchMatch extends Command
 
     }
 
-    
+
     public function storeQuestionsFromOdd($match_id, $details, $end_time)
     {
         $home_team = $details->home_team;
@@ -244,7 +235,7 @@ class FetchMatch extends Command
             "price" => 0,
             "point" => 0,
         ]];
-        
+
         $totals = [[
             "name" => 'Over',
             "price" => 0,
@@ -258,12 +249,12 @@ class FetchMatch extends Command
         $h2h_count = 0;
         $spreads_count = 0;
         $totals_count = 0;
-        
+
         $bookmakers = $details->bookmakers;
         foreach ($bookmakers as $bookmaker)
         {
             $markets = $bookmaker->markets;
-            
+
             foreach ($markets as $market)
             {
                 if ($market->key == 'h2h') {

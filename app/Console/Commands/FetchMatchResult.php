@@ -53,22 +53,19 @@ class FetchMatchResult extends Command
      */
     public function handle()
     {
-        $now = Carbon::now();
-        $basic = (object)config('basic');
-
         $matches = GameMatch::with('gameTournament')->where('status', 1)->get()->toArray();
         $keys = [];
         foreach($matches as $match)
         {
             $keys[] = $match['game_tournament']['odd_key'];
         }
-        
+
 
         foreach ($keys as $key)
         {
             $match_results = $this->fetchResult($key);
             Log::info("Key : " . $key);
-    
+
             foreach($match_results as $match_result)
             {
                 if (!$match_result->completed) continue;
@@ -110,7 +107,7 @@ class FetchMatchResult extends Command
     public function setWinnersToQuiz($match, $winner)
     {
         GameQuestions::where('match_id', $match['id'])->get()->map(function ($quiz) use ($match, $winner) {
-            
+
             if ($quiz['name'] == 'MoneyLine')
             {
                 $this->setWinnersToMoneyLine($match, $quiz, $winner);
@@ -155,7 +152,7 @@ class FetchMatchResult extends Command
     public function setWinnersToSpreads($match, $quiz, $winner)
     {
         $opts = GameOption::where('question_id', $quiz->id)->get()->map(function ($opt) use ($winner) {
-            
+
             list($name, $point) = explode(" | ", $opt->option_name);
 
             if ($name == $winner['name'])
@@ -184,7 +181,7 @@ class FetchMatchResult extends Command
 
             list($name, $point) = explode(" | ", $opt->option_name);
             $totals = $winner['max'] + $winner['min'];
-            
+
             if ($name == 'Over')
             {
                 Log::info("Over Opt => " . $totals . $point);
