@@ -22,12 +22,13 @@ class Controller extends BaseController
         $url = $api_url.'/v4'.$url.'/?'.$query.'&apiKey='.$api_key;
 
         $response = Http::get($url);
+
+        Log::channel('odds')->info($url, json_decode($response->body(), true));
+
         if ($response->successful()) {
-            Log::channel('odds')->info($url, json_decode($response->body()));
             return $response->body();
         }
 
-        Log::channel('odds')->info($url, ['result' => 'Failed']);
         return null;
     }
 }
