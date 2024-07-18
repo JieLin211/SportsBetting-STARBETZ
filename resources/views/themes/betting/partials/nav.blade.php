@@ -35,7 +35,7 @@
         </div>
         <div class="navbar-text">
             @auth
-                <span class="fs-5 me-2"><sup>{{config('basic.currency_symbol')}}</sup>{{Auth()->user()->balance}}</span>
+                <span class="fs-5 me-2">Balance: <sup>{{config('basic.currency_symbol')}}</sup>{{Auth()->user()->balance}}</span>
             @endauth
 
             <button onclick="darkMode()" class="btn-custom light night-mode">
