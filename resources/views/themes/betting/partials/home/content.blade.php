@@ -43,13 +43,11 @@
             <td>
                 <p>
                     <span>
-                        <img :src="item.team1_img" alt="..">
                         @{{ item.team1 }}
                     </span>
                 </p>
                 <p>
                     <span>
-                        <img :src="item.team2_img" alt="..">
                         @{{ item.team2 }}
                     </span>
                 </p>
