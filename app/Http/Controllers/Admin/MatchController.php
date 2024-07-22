@@ -75,6 +75,7 @@ class MatchController extends Controller
 
         $data['tournaments'] = GameTournament::whereStatus(1)->with('gameCategory')->orderBy('name', 'asc')->get();
         $data['categories'] = GameCategory::whereStatus(1)->orderBy('name', 'asc')->get();
+        $data['matches_from_odd'] = json_decode($this::matchesFromOdds());
 
         return view('admin.match.list', $data);
     }
