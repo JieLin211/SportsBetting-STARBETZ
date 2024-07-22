@@ -100,9 +100,27 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
-        'odds' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/odds.log'),
+        'odds-categories' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/odds/' . date('Y-m-d') . '/' . date('H') . '~' . date('H', strtotime('+1 hour')) . '.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
+        'odds-tournaments' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/odds/' . date('Y-m-d') . '/' . date('H') . '~' . date('H', strtotime('+1 hour')) . '.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
+        'odds-teams' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/odds/' . date('Y-m-d') . '/' . date('H') . '~' . date('H', strtotime('+1 hour')) . '.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
+        'odds-matches' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/odds/' . date('Y-m-d') . '/' . date('H') . '~' . date('H', strtotime('+1 hour')) . '.log'),
             'level' => env('LOG_LEVEL', 'debug'),
         ],
     ],
