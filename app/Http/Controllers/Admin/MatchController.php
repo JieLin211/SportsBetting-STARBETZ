@@ -14,6 +14,7 @@ use App\Models\GameTeam;
 use App\Models\GameTournament;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Stevebauman\Purify\Facades\Purify;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -76,6 +77,8 @@ class MatchController extends Controller
         $data['tournaments'] = GameTournament::whereStatus(1)->with('gameCategory')->orderBy('name', 'asc')->get();
         $data['categories'] = GameCategory::whereStatus(1)->orderBy('name', 'asc')->get();
         $data['matches_from_odd'] = json_decode($this::matchesFromOdds());
+
+        Log::channel('admin')->info(json_encode($data));
 
         return view('admin.match.list', $data);
     }

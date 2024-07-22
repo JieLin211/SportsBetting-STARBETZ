@@ -105,6 +105,12 @@ return [
             'path' => storage_path('logs/odds/' . date('Y-m-d') . '/' . date('H') . '~' . date('H', strtotime('+1 hour')) . '.log'),
             'level' => env('LOG_LEVEL', 'debug'),
         ],
+
+        'admin' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/admin.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
     ],
 
 ];
