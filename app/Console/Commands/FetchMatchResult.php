@@ -101,6 +101,8 @@ class FetchMatchResult extends Command
         $content = $ctrl->fetchFromOdds('/sports/'.$sport_key.'/scores', 'daysFrom=1');
         if ($content == null) [];
 
+        Log::channel('odds-results')->info('/sports/'.$sport_key.'/scores', json_decode($content, true));
+
         return json_decode($content);
     }
 

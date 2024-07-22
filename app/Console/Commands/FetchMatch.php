@@ -48,18 +48,25 @@ class FetchMatch extends Command
      */
     public function handle()
     {
-        $this->createCategories();
-        $this->createTournaments();
-        $this->createTeams();
-        $this->createMatches();
+        $ctrl = new Controller();
+        $content = $ctrl->fetchFromOdds('/sports', '');
+        if ($content != null) {
+            $this->createCategories($content);
+            $this->createTournaments($content);
+        }
+        $content = $ctrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
+        if ($content != null) {
+            $this->createTeams($content);
+            $this->createMatches($content);
+        }
         $this->info('status');
     }
 
-    public function createCategories()
+    public function createCategories($content)
     {
-        $ctrl = new Controller();
-        $content = $ctrl->fetchFromOdds('/sports', '');
-        if ($content == null) return;
+//        $ctrl = new Controller();
+//        $content = $ctrl->fetchFromOdds('/sports', '');
+//        if ($content == null) return;
 
         $sports = json_decode($content);
         $added_categories = GameCategory::orderBy('id', 'desc')->get()->pluck('name')->toArray();
@@ -85,11 +92,11 @@ class FetchMatch extends Command
         }
     }
 
-    public function createTournaments()
+    public function createTournaments($content)
     {
-        $ctrl = new Controller();
-        $content = $ctrl->fetchFromOdds('/sports', '');
-        if ($content == null) return;
+//        $ctrl = new Controller();
+//        $content = $ctrl->fetchFromOdds('/sports', '');
+//        if ($content == null) return;
 
         $sports = json_decode($content);
         $added_tournaments = GameTournament::orderBy('id', 'desc')->get()->pluck('odd_key')->toArray();
@@ -113,11 +120,11 @@ class FetchMatch extends Command
         }
     }
 
-    public function createTeams()
+    public function createTeams($content)
     {
-        $ctrl = new Controller();
-        $content = $ctrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
-        if ($content == null) return;
+//        $ctrl = new Controller();
+//        $content = $ctrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
+//        if ($content == null) return;
 
         $matches = json_decode($content);
         $added_teams = GameTeam::orderBy('id', 'desc')->get()->pluck('name')->toArray();
@@ -156,11 +163,11 @@ class FetchMatch extends Command
         }
     }
 
-    public function createMatches()
+    public function createMatches($content)
     {
-        $ctrl = new Controller();
-        $content = $ctrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
-        if ($content == null) return;
+//        $ctrl = new Controller();
+//        $content = $ctrl->fetchFromOdds('/sports/upcoming/odds', 'regions=us,us2,uk,eu,au&markets=h2h,totals,spreads');
+//        if ($content == null) return;
 
         $matches = json_decode($content);
         $tours = GameTournament::with('gameCategory')->orderBy('id', 'desc')->get()->toArray();
