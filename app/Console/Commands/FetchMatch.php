@@ -303,10 +303,10 @@ class FetchMatch extends Command
                 $item['name'] = $item1['name'];
 
                 if (isset($item2['point']))
-                    $item['point'] = number_format($item2['point'] ? ($item1['point'] * ($count - 1) + $item2['point']) / $count : 0, 2);
+                    $item['point'] = number_format($item2['point'] ? ($item1['point'] * ($count - 1) + $item2['point']) / $count : $item1['point'], 2);
 
                 if (isset($item2['price']))
-                    $item['price'] = number_format($item2['price'] ? ($item1['price'] * ($count - 1) + $item2['price']) / $count : 0, 2);
+                    $item['price'] = number_format($item2['price'] ? ($item1['price'] * ($count - 1) + $item2['price']) / $count : $item1['price'], 2);
 
                 break;
             }
