@@ -54,7 +54,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('cron:status')->hourly();
         $schedule->command('payout-status:update')->everyFiveMinutes();
         $schedule->command('cron:fetch')->hourly();
-        $schedule->command('cron:match-result');
+        $schedule->command('cron:match-result')->withoutOverlapping();
     }
 
     /**
