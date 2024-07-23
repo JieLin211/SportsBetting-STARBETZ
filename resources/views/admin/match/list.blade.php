@@ -176,9 +176,12 @@
                                 @if ($item->status == 0)
                                     <span class="badge badge-light">
                                <i class="fa fa-circle text-danger danger font-12"></i> @lang('Deactive') </span>
-                                @else
+                                @elseif($item->status == 1)
                                     <span class="badge badge-light">
                                <i class="fa fa-circle text-success success font-12"></i> @lang('Active')</span>
+                                @elseif($item->status == 2)
+                                    <span class="badge badge-light">
+                               <i class="fa fa-circle text-danger danger font-12"></i> @lang('Closed') </span>
                                 @endif
                             </td>
 
